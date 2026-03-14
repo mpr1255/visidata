@@ -132,12 +132,17 @@ def setMacro(vd, ks:str, vs, helpstr='', keystroke=''):
     vs.helpstr = helpstr
     vs.keystroke = keystroke
     vd.macrobindings[ks] = vs
-    if vd.isLongname(ks):
-        BaseSheet.addCommand('', ks, f'runMacro("{ks}")', helpstr)
-        if keystroke:  #2784
-            BaseSheet.bindkey(keystroke, ks)
-    else:
-        BaseSheet.addCommand(ks, f'exec-{vs.name}', f'runMacro("{ks}")', helpstr)
+    old_module = vd.importingModule
+    vd.importingModule = 'macros'
+    try:
+        if vd.isLongname(ks):
+            BaseSheet.addCommand('', ks, f'runMacro("{ks}")', helpstr)
+            if keystroke:  #2784
+                BaseSheet.bindkey(keystroke, ks)
+        else:
+            BaseSheet.addCommand(ks, f'exec-{vs.name}', f'runMacro("{ks}")', helpstr)
+    finally:
+        vd.importingModule = old_module
 
 
 @CommandLogJsonl.api
@@ -191,6 +196,11 @@ def startMacro(cmdlog):
                     Spell out a keystroke (like `Alt+b`) or press `Enter` to skip.
                     - Press `Ctrl+N` and then press another keystroke to spell that keystroke.
                 ''')
+                while keystroke:
+                    existing = vd.bindkeys._get(vd.prettykeys(keystroke), BaseSheet)
+                    if not existing:
+                        break
+                    keystroke = vd.input(f'{vd.prettykeys(keystroke)} already bound to {existing}; enter keystroke (Enter to skip): ')
 
             vd.cmdlog.saveMacro(vd.macroMode.rows, ks, keystroke=keystroke)
         finally:
