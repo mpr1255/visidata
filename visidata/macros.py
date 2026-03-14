@@ -1,4 +1,3 @@
-import json
 import re
 from copy import copy
 from functools import wraps
@@ -108,8 +107,10 @@ def runMacro(vd, binding:str):
                     params[name] = default or ''
 
     if params:
-        params_json = vd.input('macro parameters: ', value=json.dumps(params))
-        param_values = json.loads(params_json)
+        param_values = vd.inputMultiple(**{
+            name: dict(prompt=f'{name}: ', value=default)
+            for name, default in params.items()
+        })
 
         cmdlog = copy(cmdlog)
         cmdlog.rows = []
