@@ -23,7 +23,7 @@ class MacroSheet(IndexSheet):
         - `Enter` to open the current macro.
         - `d` to mark macro for delete; `z Ctrl+S` to commit.
         - Edit `keystroke` to bind/change a keystroke for a macro.
-        - Edit command inputs to use `{param}` or `{param=default}` for parameters.
+        - Edit `input` or `col` to use `{param}` or `{param=default}` for parameters.
     '''
     columns = [
         AttrColumn('binding'),
@@ -100,11 +100,13 @@ def runMacro(vd, binding:str):
     # #2785: check for parameterized inputs
     params = {}  # name -> default
     for row in cmdlog.rows:
-        if row.input:
-            for m in MACRO_PARAM_RE.finditer(str(row.input)):
-                name, default = m.group(1), m.group(2)
-                if name not in params:
-                    params[name] = default or ''
+        for field in ('input', 'col'):
+            val = getattr(row, field, '')
+            if val:
+                for m in MACRO_PARAM_RE.finditer(str(val)):
+                    name, default = m.group(1), m.group(2)
+                    if name not in params:
+                        params[name] = default or ''
 
     if params:
         param_values = vd.inputMultiple(**{
@@ -116,10 +118,12 @@ def runMacro(vd, binding:str):
         cmdlog.rows = []
         for row in vd.macrobindings[binding].rows:
             row = copy(row)
-            if row.input:
-                row.input = MACRO_PARAM_RE.sub(
-                    lambda m: param_values.get(m.group(1), m.group(0)),
-                    str(row.input))
+            for field in ('input', 'col'):
+                val = getattr(row, field, '')
+                if val:
+                    setattr(row, field, MACRO_PARAM_RE.sub(
+                        lambda m: param_values.get(m.group(1), m.group(0)),
+                        str(val)))
             cmdlog.rows.append(row)
 
     vd.replay_sync(cmdlog)
