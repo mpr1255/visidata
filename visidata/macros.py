@@ -129,6 +129,8 @@ def runMacro(vd, binding:str):
 @VisiData.api
 def setMacro(vd, ks:str, vs, helpstr='', keystroke=''):
     'Set *ks* which is either a keystroke or a longname to run the cmdlog in *vs*.'
+    ks = vd.prettykeys(ks)
+    keystroke = vd.prettykeys(keystroke) if keystroke else ''
     vs.binding = ks
     vs.helpstr = helpstr
     vs.keystroke = keystroke
@@ -187,8 +189,9 @@ def startMacro(cmdlog):
                 - Press `Ctrl+N` and then press another keystroke to spell that keystroke.
                 - Press `Ctrl+C` to cancel the macro recording.
             ''')
+            ks = vd.prettykeys(ks)
             while ks in vd.macrobindings:
-                ks = vd.input(f'{ks} already in use; set macro to keybinding: ')
+                ks = vd.prettykeys(vd.input(f'{ks} already in use; set macro to keybinding: '))
 
             keystroke = ''
             if vd.isLongname(ks):  #2784
@@ -198,10 +201,11 @@ def startMacro(cmdlog):
                     - Press `Ctrl+N` and then press another keystroke to spell that keystroke.
                 ''')
                 while keystroke:
-                    existing = vd.bindkeys._get(vd.prettykeys(keystroke), BaseSheet)
+                    keystroke = vd.prettykeys(keystroke)
+                    existing = vd.bindkeys._get(keystroke, BaseSheet)
                     if not existing:
                         break
-                    keystroke = vd.input(f'{vd.prettykeys(keystroke)} already bound to {existing}; enter keystroke (Enter to skip): ')
+                    keystroke = vd.input(f'{keystroke} already bound to {existing}; enter keystroke (Enter to skip): ')
 
             vd.cmdlog.saveMacro(vd.macroMode.rows, ks, keystroke=keystroke)
         finally:
