@@ -64,8 +64,7 @@ def _history_palette_hook(vd, prompt, type=None, history=[], updater=lambda v: N
     def _nav_down(v, i):
         if not display[0] or cursor[0] == -1: return v, i
         if cursor[0] >= len(display[0]) - 1:
-            cursor[0] = -1
-            return orig[0], len(orig[0])
+            return v, i  # stay put at bottom
         cursor[0] += 1
         _bounds()
         return _sel()
@@ -126,7 +125,7 @@ def _history_palette_hook(vd, prompt, type=None, history=[], updater=lambda v: N
                 display[0] = [(m.formatted.get('input', m.match['input']), m.match['input']) for m in matches]
             else:
                 display[0] = [(item, item) for item in items]
-                return  # no draw when idle
+            return  # don't draw until user navigates
 
         if not display[0]: return
         ndisplay = min(len(display[0]), nv)
