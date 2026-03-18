@@ -400,7 +400,7 @@ def unbindkey(vd, keystrokes, obj='BaseSheet'):
 def bindkey(cls, keystrokes, longname):
     'Bind *keystrokes* to *longname* on the *cls* sheet type.'
     oldlongname = vd.bindkeys._get(keystrokes, cls)
-    if oldlongname:
+    if oldlongname and oldlongname != longname:
         vd.warning('%s was already bound to %s' % (keystrokes, oldlongname))
     vd.bindkey(keystrokes, longname, cls)
 
