@@ -184,9 +184,6 @@ class InputWidget:
                 ch = vd.getkeystroke(scr)
                 if ch in bindings:
                     self.value, self.current_i = bindings[ch](self.value, self.current_i)
-                    if self.history and self.value in self.history:
-                        self.hist_idx = self.history.index(self.value)
-                        self.prev_val = self.prev_val or ''
                     self.first_action = False
                 else:
                     if self.handle_key(ch, scr):

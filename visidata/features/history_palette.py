@@ -21,6 +21,7 @@ def _history_palette_hook(vd, prompt, type=None, history=[], updater=lambda v: N
 
     # display: list of (formatted_text, raw_value); shared between draw and nav
     display = [[(item, item) for item in items]]
+    haystack = [dict(input=item) for item in items]  # precomputed for fuzzymatch
     cursor = [-1]       # -1 = free-typing, 0..N-1 = index into display
     top = [0]           # first visible index
     orig = ['']         # saved input before history navigation
@@ -64,7 +65,9 @@ def _history_palette_hook(vd, prompt, type=None, history=[], updater=lambda v: N
     def _nav_down(v, i):
         if not display[0] or cursor[0] == -1: return v, i
         if cursor[0] >= len(display[0]) - 1:
-            return v, i  # stay put at bottom
+            cursor[0] = -1  # restore original typed text
+            v = orig[0]
+            return v, len(v)
         cursor[0] += 1
         _bounds()
         return _sel()
@@ -120,7 +123,6 @@ def _history_palette_hook(vd, prompt, type=None, history=[], updater=lambda v: N
         if cursor[0] == -1:
             # Recompute display list (nav bindings read this on next keypress)
             if value:
-                haystack = [dict(input=item) for item in items]
                 matches = vd.fuzzymatch(haystack, value.split())
                 display[0] = [(m.formatted.get('input', m.match['input']), m.match['input']) for m in matches]
             else:
@@ -129,14 +131,9 @@ def _history_palette_hook(vd, prompt, type=None, history=[], updater=lambda v: N
 
         if not display[0]: return
         ndisplay = min(len(display[0]), nv)
-
-        if cursor[0] >= 0:
-            vis_start = max(0, min(top[0], len(display[0]) - ndisplay))
-            top[0] = vis_start
-            highlight = cursor[0] - vis_start
-        else:
-            vis_start = 0  # best matches at top
-            highlight = -1
+        vis_start = max(0, min(top[0], len(display[0]) - ndisplay))
+        top[0] = vis_start
+        highlight = cursor[0] - vis_start
 
         visible = display[0][vis_start:vis_start + ndisplay]
         if not visible: return
